@@ -1,6 +1,6 @@
 @description('Location for all resources.')
 param location string = resourceGroup().location
-param visionName string 
+param visionName string
 
 @description('SKU for Computer Vision API')
 @allowed([
@@ -47,7 +47,7 @@ resource visionApi 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
   }
 //  identity: identity
   properties: {
-    customSubDomainName: toLower(visionName)
+    //customSubDomainName: toLower(visionName)
     publicNetworkAccess: 'Enabled'
   }
 }
