@@ -1,8 +1,8 @@
 #!/bin/bash
-set -x
+set -xe
 
 ndt deploy-azure vision vision
-export VISION_API_KEY=$(az deployment group show -g ndtmaster-vision-vision -n ndtmaster_vision_vision --query properties.outputs.visionApiKey.value -o tsv)
+export VISION_API_KEY=$(az deployment group show -g ndtmain-vision-vision -n ndtmain_vision_vision --query properties.outputs.visionApiKey.value -o tsv)
 
 ndt deploy-terraform firestore firestore
 
