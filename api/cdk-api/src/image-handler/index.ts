@@ -99,7 +99,9 @@ async function describeImage(imageUrl: string, targetKeyword: string): Promise<V
 
     try {
         const result = await client.describeImage(imageUrl, options)
-        return { score: result.captions[0].confidence, caption: result.captions[0].text }
+        const caption = result.captions[0].text
+        const score = caption.match(targetKeyword) ? result.captions[0].confidence : 0
+        return { score, caption }
     } catch (err: any) {
         console.log("An error occurred with vision api:");
         console.error(err);
