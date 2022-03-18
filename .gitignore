@@ -74,5 +74,10 @@ cdk.out
 *.tfstate*
 .terraform
 .terraform.*
+terraform.tfvars
+
+azuredeploy.bicep
+azuredeploy.json
+cdk-*/variables.json
 
 .DS_Store
