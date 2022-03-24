@@ -3,6 +3,7 @@ variable "GOOGLE_FOLDER_ID" {}
 variable "GOOGLE_BILLING_ID" {}
 variable "GOOGLE_STORAGE_LOCATION" {}
 variable "GOOGLE_PROJECT_ID" {}
+variable "GOOGLE_SERVICE_ACCOUNT_SECRET_NAME" {}
 
 provider "google" {
   region = var.GOOGLE_LOCATION
@@ -104,3 +105,37 @@ resource "google_storage_bucket_object" "default" {
     })
 }
 
+
+# Cross cloud access setup
+resource "google_service_account" "cross-cloud" {
+  account_id   = "nfinder-cross-cloud"
+  display_name = "nFinder Cross Cloud Service Account"
+}
+
+resource "google_service_account_key" "cross-cloud-key" {
+  service_account_id = google_service_account.cross-cloud.name
+}
+
+resource "aws_secretsmanager_secret" "google-credentials" {
+  name = var.GOOGLE_SERVICE_ACCOUNT_SECRET_NAME
+}
+
+resource "aws_secretsmanager_secret_version" "google-credentials" {
+  secret_id     = aws_secretsmanager_secret.google-credentials.id
+  secret_string = base64decode(google_service_account_key.cross-cloud-key.private_key)
+}
+
+resource "google_project_iam_policy" "project" {
+  project     = google_project.nfinder.project_id
+  policy_data = data.google_iam_policy.crosscloud.policy_data
+}
+
+data "google_iam_policy" "crosscloud" {
+  binding {
+    role = "roles/firebase.admin"
+
+    members = [
+      "serviceAccount:${google_service_account.cross-cloud.email}",
+    ]
+  }
+}
