@@ -1,12 +1,10 @@
-import { Stack, StackProps, Duration, CfnOutput } from 'aws-cdk-lib';
+import { Duration } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
-import { HttpJwtAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
 import { aws_lambda as lambda, aws_s3 as s3, aws_s3_notifications as s3_notifications } from 'aws-cdk-lib';
-import * as apigwv2 from '@aws-cdk/aws-apigatewayv2-alpha';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
+import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 
 
 export interface ImageHandlerProps {
@@ -30,7 +28,8 @@ export class ImageHandler extends Construct {
         environment: {
           BUCKET_NAME: props.bucket.bucketName,
           VISION_API_KEY: process.env.VISION_API_KEY!,
-          VISION_API_URL: process.env.VISION_API_URL!
+          VISION_API_URL: process.env.VISION_API_URL!,
+          GOOGLE_SERVICE_ACCOUNT_SECRET_NAME: process.env.GOOGLE_SERVICE_ACCOUNT_SECRET_NAME!,
         },
         logRetention: RetentionDays.ONE_MONTH,
         bundling: {
@@ -47,6 +46,9 @@ export class ImageHandler extends Construct {
 
     props.bucket.grantRead(imageHandlerFn);
     props.bucket.grantPut(imageHandlerFn);
+
+    const googleServiceAccountSecret = Secret.fromSecretNameV2(this, 'GoogleSecret', process.env.GOOGLE_SERVICE_ACCOUNT_SECRET_NAME!)
+    googleServiceAccountSecret.grantRead(imageHandlerFn);
   }
 
 }
