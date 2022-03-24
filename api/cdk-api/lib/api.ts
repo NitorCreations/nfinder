@@ -48,6 +48,7 @@ export class ApiStack extends Stack {
       ],
     });
 
+    s3Bucket.grantPublicAccess('processed/*');
 
 
     const getPresignedUrlFunction = new NodejsFunction(
@@ -72,7 +73,7 @@ export class ApiStack extends Stack {
       jwtAudience: [process.env.CLIENT_ID!],
     });
     httpApi.addRoutes({
-      path: '/get-presigned-url-s3',
+      path: '/get-presigned-url-s3/{keyword}',
       methods: [apigwv2.HttpMethod.GET],
       integration: new HttpLambdaIntegration('get-url-integration', getPresignedUrlFunction),
       authorizer
