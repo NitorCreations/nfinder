@@ -8,7 +8,8 @@ exports.main = async (event: APIGatewayEvent) => {
     const s3 = new AWS.S3()
 
     const myBucket = process.env.BUCKET_NAME
-    const myKey = `upload/${randomUUID()}.jpg`
+    const keyword = event.pathParameters!.keyword!
+    const myKey = `upload/${keyword}/${randomUUID()}.jpg`
     const signedUrlExpireSeconds = 60 * 5
 
     const url = s3.getSignedUrl('putObject', {

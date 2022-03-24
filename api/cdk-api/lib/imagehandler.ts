@@ -27,9 +27,11 @@ export class ImageHandler extends Construct {
         entry: path.join(__dirname, '/../src/image-handler/index.ts'),
         environment: {
           BUCKET_NAME: props.bucket.bucketName,
+          PUBLIC_IMAGE_DOMAIN: props.bucket.bucketDomainName,
           VISION_API_KEY: process.env.VISION_API_KEY!,
           VISION_API_URL: process.env.VISION_API_URL!,
           GOOGLE_SERVICE_ACCOUNT_SECRET_NAME: process.env.GOOGLE_SERVICE_ACCOUNT_SECRET_NAME!,
+          GCLOUD_PROJECT: process.env.GOOGLE_PROJECT_ID!
         },
         logRetention: RetentionDays.ONE_MONTH,
         bundling: {
