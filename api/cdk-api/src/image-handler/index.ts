@@ -139,7 +139,8 @@ async function describeImage(imageUrl: string, targetKeyword: string): Promise<V
     };
 
     try {
-        const result = await client.describeImage(imageUrl, options)
+        const result = await client.describeImage(imageUrl, options);
+        console.log(result);
         const caption = result.captions![0].text!
         const score = caption!.match(targetKeyword) ? parseFloat(result.captions![0].confidence!.toPrecision(4)) * 10000 : 0
         return { score, caption }

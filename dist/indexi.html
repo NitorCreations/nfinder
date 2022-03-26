@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body>
+    <button id="get-access">Get access to camera</button>
+    <video autoplay></video>
+    <button id="takePhoto">Take photo</button>
+    <img id="imitsi"></img>
+
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
+        import { getFirestore, collection, getDocs, getDoc, onSnapshot, doc, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js'
+
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        //const firebaseConfig = {
+        //    apiKey: "AIzaSyAAyIzIhxM05MTTWOTACZjfVRDqQ5y5tDo",
+        //    authDomain: "mikatest-a93ae.firebaseapp.com",
+        //    projectId: "mikatest-a93ae",
+        //    storageBucket: "mikatest-a93ae.appspot.com",
+        //    messagingSenderId: "696164321977",
+        //    appId: "1:696164321977:web:36bd68081c5793520ca968"
+        //};
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5cpT3kTay1x60tdOd4C6_sxRyLlIEX-I",
+            authDomain: "nfinder-1.firebaseapp.com",
+            projectId: "nfinder-1",
+            storageBucket: "nfinder-1.appspot.com",
+            messagingSenderId: "278244435575",
+            appId: "1:278244435575:web:7c41fb6b45413a3fd60872"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        //const analytics = getAnalytics(app);
+
+
+        const fb = getFirestore();
+        const docRef = doc(fb, "test", "test");
+        try {
+            const docData = getDoc(docRef).then((docData) => {
+                console.log('yeah');
+                console.log(docData.data());
+            })
+        } catch (err) {
+            console.log(err);
+        }
+
+    </script>
+
+</body>
+
+</html>

@@ -68,9 +68,9 @@ export class ApiStack extends Stack {
     s3Bucket.grantPut(getPresignedUrlFunction);
     s3Bucket.grantPutAcl(getPresignedUrlFunction);
 
-    const issuer = 'https://accounts.google.com';
+    const issuer = `https://securetoken.google.com/${process.env.GOOGLE_PROJECT_ID}`;
     const authorizer = new HttpJwtAuthorizer('ApiAuthorizer', issuer, {
-      jwtAudience: [process.env.CLIENT_ID!],
+      jwtAudience: [process.env.GOOGLE_PROJECT_ID!],
     });
     httpApi.addRoutes({
       path: '/get-presigned-url-s3/{keyword}',
