@@ -10,6 +10,8 @@
     <img id="imitsi"></img>
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script type="module" src="/imagecapture.js">
+    </script>
 
     <h1 id="photoheader"></h1>
     <div id="photocontainer"></div>
@@ -20,6 +22,8 @@
         import { getFirestore, collection, getDocs, getDoc, onSnapshot, doc, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore.js'
         import { getAuth, signInWithCredential, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
 
+        var track;
+
         document.querySelector('#get-access').addEventListener('click', async function init(e) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -27,7 +31,7 @@
                     video: true
                 })
                 const videoTracks = stream.getVideoTracks()
-                const track = videoTracks[0]
+                track = videoTracks[0]
                 //alert(`Getting video from: ${track.label}`)
                 document.querySelector('video').srcObject = stream
                 document.querySelector('#get-access').setAttribute('hidden', true)
@@ -40,14 +44,14 @@
         })
 
         var takePhotoButton = document.querySelector('button#takePhoto');
-        var img = document.querySelector('imitsi');
+        var img = document.querySelector('#imitsi');
 
         takePhotoButton.onclick = takePhoto;
 
         // Get a Blob from the currently selected camera source and
         // display this with an img element.
         function takePhoto() {
-            var imageCapture = new ImageCapture(track);
+            var imageCapture = new window.ImageCapture(track);
             imageCapture.takePhoto().then(function (blob) {
                 console.log('Took photo:', blob);
                 img.classList.remove('hidden');
@@ -93,6 +97,8 @@
 
         }
         window.onload = function () {
+            const photoHeader = document.querySelector('#photoheader');
+            photoHeader.textContent = `Scoreboard for "${parseKeywordFromPath()}"`;
             const provider = new GoogleAuthProvider();
             const auth = getAuth(firebaseApp);
             signInWithPopup(auth, provider)
@@ -102,6 +108,7 @@
                     const token = credential.accessToken;
                     // The signed-in user info.
                     const user = result.user;
+                    console.log(user.accessToken);
                     // ...
                     const firestore = getFirestore(firebaseApp);
                     const unsubFirestore = await loadImages(firestore);
@@ -121,7 +128,7 @@
         }
 
         async function loadImages(firestore) {
-            const q = query(collection(firestore, parseKeywordFromPath()), orderBy("score"));
+            const q = query(collection(firestore, "eagle"), orderBy("score", "desc"));
             const unsubscribe = onSnapshot(q, (querySnapshot) => {
                 const images = [];
                 querySnapshot.forEach((doc) => {
@@ -134,6 +141,7 @@
 
         function renderImages(images) {
             const container = document.querySelector('#photocontainer');
+            container.textContent = '';
             images.forEach((image) => {
                 // create a new div element
                 const newDiv = document.createElement("div");
@@ -166,7 +174,7 @@
     </script>
 
 
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
     <script>
     </script>
     <div id="buttonDiv"></div>
