@@ -4,7 +4,7 @@
 <head></head>
 
 <body>
-    <button id="get-access">Get access to camera</button>
+    <button id="get-access">Activate camera</button>
     <video autoplay></video>
     <button id="takePhoto">Take photo</button>
     <img id="imitsi"></img>
@@ -34,9 +34,9 @@
                 track = videoTracks[0]
                 //alert(`Getting video from: ${track.label}`)
                 document.querySelector('video').srcObject = stream
-                document.querySelector('#get-access').setAttribute('hidden', true)
-                //The video stream is stopped by track.stop() after 3 second of playback.
-                setTimeout(() => { track.stop() }, 3 * 1000)
+                //document.querySelector('#get-access').setAttribute('hidden', true)
+                //The video stream is stopped by track.stop() after 30 seconds of playback.
+                setTimeout(() => { track.stop() }, 30 * 1000)
             } catch (error) {
                 alert(`${error.name}`)
                 console.error(error)
@@ -53,12 +53,31 @@
         function takePhoto() {
             var imageCapture = new window.ImageCapture(track);
             imageCapture.takePhoto().then(function (blob) {
-                console.log('Took photo:', blob);
                 img.classList.remove('hidden');
                 img.src = URL.createObjectURL(blob);
+                submitPhoto(blob);
             }).catch(function (error) {
                 console.log('takePhoto() error: ', error);
             });
+        }
+
+        async function submitPhoto(blob) {
+            let response = await fetch(getPresignedUrlEndpoint + `?contentType=${blob.type}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                }
+            });
+            let presignedData = await response.json();
+            console.log(presignedData);
+
+            fetch(presignedData.imagePostUrl, {
+                method: "PUT",
+                headers: {},
+                body: blob,
+            }).then(res => {
+                console.log("Request complete! response:", res);
+            });
+
         }
 
         // Initialize Firestore through Firebase
@@ -73,6 +92,8 @@
             appId: "1:278244435575:web:7c41fb6b45413a3fd60872"
         };
         const firebaseApp = initializeApp(firebaseConfig);
+        const keyword = parseKeywordFromPath();
+        const getPresignedUrlEndpoint = `https://g1nhbctnde.execute-api.eu-west-1.amazonaws.com/get-presigned-url-s3/${keyword}`;
         //const oauthClientId = "997502378708-b0ugr5c1kfsusje8odk7jvbi3f2r9u6q.apps.googleusercontent.com";
 
         function handleCredentialResponse(response) {
@@ -96,6 +117,7 @@
                 });
 
         }
+        let accessToken;
         window.onload = function () {
             const photoHeader = document.querySelector('#photoheader');
             photoHeader.textContent = `Scoreboard for "${parseKeywordFromPath()}"`;
@@ -105,13 +127,14 @@
                 .then(async (result) => {
                     // This gives you a Google Access Token. You can use it to access the Google API.
                     const credential = GoogleAuthProvider.credentialFromResult(result);
-                    const token = credential.accessToken;
+
                     // The signed-in user info.
                     const user = result.user;
                     console.log(user.accessToken);
+                    accessToken = user.accessToken;
                     // ...
                     const firestore = getFirestore(firebaseApp);
-                    const unsubFirestore = await loadImages(firestore);
+                    const unsubFirestore = await loadImages(firestore, keyword);
                 }).catch((error) => {
                     console.log(error);
                 });
@@ -127,8 +150,8 @@
             //    google.accounts.id.prompt(); // also display the One Tap dialog
         }
 
-        async function loadImages(firestore) {
-            const q = query(collection(firestore, "eagle"), orderBy("score", "desc"));
+        async function loadImages(firestore, keyword) {
+            const q = query(collection(firestore, keyword), orderBy("score", "desc"));
             const unsubscribe = onSnapshot(q, (querySnapshot) => {
                 const images = [];
                 querySnapshot.forEach((doc) => {
@@ -166,7 +189,8 @@
             const match = window.location.href.match(/.*\/(.*)/)
             const keyword = match.length > 1 ? match[1] : 'goat';
             console.log(`keyword: ${keyword}`);
-            return keyword
+            return "goat";
+            return keyword;
         }
 //        const firestore = getFirestore(firebaseApp);
  //       const unsubFirestore = await loadImages(firestore);

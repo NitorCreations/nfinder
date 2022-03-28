@@ -8,6 +8,7 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 import { ImageHandler } from './imagehandler';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
+import { Frontend } from './frontend';
 
 export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -29,8 +30,8 @@ export class ApiStack extends Stack {
           apigwv2.CorsHttpMethod.PATCH,
           apigwv2.CorsHttpMethod.DELETE,
         ],
-        allowCredentials: true,
-        allowOrigins: [process.env.APP_URL!],
+        allowCredentials: false,
+        allowOrigins: ['http://localhost:8080', process.env.APP_URL!],
       },
     });
 
@@ -42,7 +43,7 @@ export class ApiStack extends Stack {
             s3.HttpMethods.POST,
             s3.HttpMethods.PUT,
           ],
-          allowedOrigins: [process.env.APP_URL!],
+          allowedOrigins: ['http://localhost:8080', process.env.APP_URL!],
           allowedHeaders: ['*'],
         },
       ],
@@ -76,10 +77,11 @@ export class ApiStack extends Stack {
       path: '/get-presigned-url-s3/{keyword}',
       methods: [apigwv2.HttpMethod.GET],
       integration: new HttpLambdaIntegration('get-url-integration', getPresignedUrlFunction),
-      authorizer
+      authorizer,
     });
 
     const imageHandler = new ImageHandler(this, 'ImageHandler', { bucket: s3Bucket });
+    const frontend = new Frontend(this, 'Frontend', { bucket: s3Bucket });
 
     new CfnOutput(this, 'apiurl', { value: httpApi.apiEndpoint })
   }
