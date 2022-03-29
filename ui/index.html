@@ -162,11 +162,6 @@
                     console.error(error);
                 }
             });
-
-            if (!localStorage.getItem('nFinder.signedIn')) {
-                console.log('login...')
-                setTimeout(() => { login() }, 10000);
-            }
         }
 
         function login() {
