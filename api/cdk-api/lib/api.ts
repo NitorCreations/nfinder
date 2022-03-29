@@ -9,10 +9,30 @@ import * as path from 'path';
 import { ImageHandler } from './imagehandler';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Frontend } from './frontend';
+import { HostedZone } from 'aws-cdk-lib/aws-route53';
 
 export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+
+    const s3Bucket = new s3.Bucket(this, id, {
+      cors: [
+        {
+          allowedMethods: [
+            s3.HttpMethods.GET,
+            s3.HttpMethods.POST,
+            s3.HttpMethods.PUT,
+          ],
+          allowedOrigins: ['http://localhost:8080', process.env.APP_URL!],
+          allowedHeaders: ['*'],
+        },
+      ],
+    });
+
+    const zone = HostedZone.fromLookup(this, 'DNSZone', {
+      domainName: process.env.HOSTED_ZONE!
+    })
+    const frontend = new Frontend(this, 'Frontend', { bucket: s3Bucket, zone });
 
     const httpApi = new apigwv2.HttpApi(this, 'api', {
       corsPreflight: {
@@ -31,26 +51,11 @@ export class ApiStack extends Stack {
           apigwv2.CorsHttpMethod.DELETE,
         ],
         allowCredentials: false,
-        allowOrigins: ['http://localhost:8080', process.env.APP_URL!],
+        allowOrigins: ['http://localhost:8080', `https://${frontend.distro.distributionDomainName}`, process.env.APP_URL!],
       },
     });
 
-    const s3Bucket = new s3.Bucket(this, id, {
-      cors: [
-        {
-          allowedMethods: [
-            s3.HttpMethods.GET,
-            s3.HttpMethods.POST,
-            s3.HttpMethods.PUT,
-          ],
-          allowedOrigins: ['http://localhost:8080', process.env.APP_URL!],
-          allowedHeaders: ['*'],
-        },
-      ],
-    });
-
     s3Bucket.grantPublicAccess('processed/*');
-
 
     const getPresignedUrlFunction = new NodejsFunction(
       this,
@@ -81,7 +86,6 @@ export class ApiStack extends Stack {
     });
 
     const imageHandler = new ImageHandler(this, 'ImageHandler', { bucket: s3Bucket });
-    const frontend = new Frontend(this, 'Frontend', { bucket: s3Bucket });
 
     new CfnOutput(this, 'apiurl', { value: httpApi.apiEndpoint })
   }

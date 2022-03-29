@@ -8,5 +8,3 @@ ndt deploy-terraform firestore firestore
 
 #This deployment needs VISION_KEY
 ndt deploy-cdk api api
-
-#ndt deploy-cdk frontend frontend

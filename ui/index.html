@@ -5,7 +5,7 @@
 
 <body>
     <button id="get-access">Activate camera</button>
-    <video autoplay></video>
+    <video autoplay playsinline></video>
     <button id="takePhoto">Take photo</button>
     <img id="imitsi"></img>
 
@@ -20,7 +20,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js'
         // Add Firebase products that you want to use
         import { getFirestore, collection, getDocs, getDoc, onSnapshot, doc, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore.js'
-        import { getAuth, signInWithCredential, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
+        import { getAuth, getRedirectResult, signInWithCredential, signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
 
         var track;
 
@@ -118,26 +118,60 @@
 
         }
         let accessToken;
-        window.onload = function () {
+        const provider = new GoogleAuthProvider();
+        const auth = getAuth(firebaseApp);
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                // User just signed in, we should not display dialog next time because of firebase auto-login
+                localStorage.setItem('nFinder.signedIn', '1');
+                console.log('auth state changed to logged in');
+                accessToken = user.accessToken;
+                console.log(user);
+                const firestore = getFirestore(firebaseApp);
+                const unsubFirestore = await loadImages(firestore, keyword);
+            } else {
+                // User just signed-out or auto-login failed, we will show sign-in form immediately the next time he loads the page
+                console.log('auth state changed to logged out');
+                localStorage.removeItem('nFinder.signedIn');
+                login();
+            }
+        });
+        console.log('current user: ' + auth.currentUser);
+
+        window.onload = async function () {
+            console.log('onload current user: ' + auth.currentUser);
             const photoHeader = document.querySelector('#photoheader');
             photoHeader.textContent = `Scoreboard for "${parseKeywordFromPath()}"`;
-            const provider = new GoogleAuthProvider();
-            const auth = getAuth(firebaseApp);
-            signInWithPopup(auth, provider)
-                .then(async (result) => {
-                    // This gives you a Google Access Token. You can use it to access the Google API.
-                    const credential = GoogleAuthProvider.credentialFromResult(result);
 
-                    // The signed-in user info.
-                    const user = result.user;
-                    console.log(user.accessToken);
+            getRedirectResult(auth).then(async function (result) {
+                // The signed-in user info.
+                if (result) {
+                    var user = result.user;
                     accessToken = user.accessToken;
-                    // ...
-                    const firestore = getFirestore(firebaseApp);
-                    const unsubFirestore = await loadImages(firestore, keyword);
-                }).catch((error) => {
-                    console.log(error);
-                });
+                    localStorage.setItem('nFinder.signedIn', '1');
+                }
+            }).catch(function (error) {
+                // Handle Errors here.
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                // The email of the user's account used.
+                var email = error.email;
+                // The firebase.auth.AuthCredential type that was used.
+                var credential = error.credential;
+                if (errorCode === 'auth/account-exists-with-different-credential') {
+                    alert('You have already signed up with a different auth provider for that email.');
+                    // If you are using multiple auth providers on your app you should handle linking
+                    // the user's accounts here.
+                } else {
+                    console.error(error);
+                }
+            });
+
+            if (!localStorage.getItem('nFinder.signedIn')) {
+                console.log('login...')
+                setTimeout(() => { login() }, 10000);
+            }
+
             //    google.accounts.id.initialize({
             //        //TODO load from config dynamically
             //        client_id: oauthClientId,
@@ -148,6 +182,22 @@
             //        { theme: "outline", size: "large" }  // customization attributes
             //    );
             //    google.accounts.id.prompt(); // also display the One Tap dialog
+        }
+
+        function login() {
+            signInWithRedirect(auth, provider)
+                .then(async (result) => {
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+
+                    // The signed-in user info.
+                    const user = result.user;
+                    console.log(user.accessToken);
+                    accessToken = user.accessToken;
+                    // ...
+                }).catch((error) => {
+                    console.log(error);
+                });
         }
 
         async function loadImages(firestore, keyword) {
@@ -189,7 +239,6 @@
             const match = window.location.href.match(/.*\/(.*)/)
             const keyword = match.length > 1 ? match[1] : 'goat';
             console.log(`keyword: ${keyword}`);
-            return "goat";
             return keyword;
         }
 //        const firestore = getFirestore(firebaseApp);

@@ -5,6 +5,12 @@ import { ApiStack } from '../lib/api';
 //import { FrontendStack } from '../lib/frontend';
 
 const app = new cdk.App();
-new ApiStack(app, 'ApiStack', { stackName: 'nFinderApi' });
+console.log(process.env.CDK_DEFAULT_ACCOUNT)
+console.log(process.env.CDK_DEFAULT_REGION)
+
+new ApiStack(app, 'ApiStack', {
+    stackName: 'nFinderApi',
+    env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
+});
 // ndt won't deploy many stacks with CDK
 //new FrontendStack(app, 'FrontendStack', { stackName: 'nFinderFrontend' });
