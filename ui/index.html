@@ -80,8 +80,6 @@
 
         }
 
-        // Initialize Firestore through Firebase
-
         // TODO load these details from bucket where they are written to by terraform
         const firebaseConfig = {
             apiKey: "AIzaSyB5cpT3kTay1x60tdOd4C6_sxRyLlIEX-I",
@@ -94,7 +92,6 @@
         const firebaseApp = initializeApp(firebaseConfig);
         const keyword = parseKeywordFromPath();
         const getPresignedUrlEndpoint = `https://g1nhbctnde.execute-api.eu-west-1.amazonaws.com/get-presigned-url-s3/${keyword}`;
-        //const oauthClientId = "997502378708-b0ugr5c1kfsusje8odk7jvbi3f2r9u6q.apps.googleusercontent.com";
 
         function handleCredentialResponse(response) {
             console.log("Encoded JWT ID token: " + response.credential);
@@ -139,13 +136,12 @@
         console.log('current user: ' + auth.currentUser);
 
         window.onload = async function () {
-            console.log('onload current user: ' + auth.currentUser);
             const photoHeader = document.querySelector('#photoheader');
             photoHeader.textContent = `Scoreboard for "${parseKeywordFromPath()}"`;
 
             getRedirectResult(auth).then(async function (result) {
                 // The signed-in user info.
-                if (result) {
+                if (result && result.user) {
                     var user = result.user;
                     accessToken = user.accessToken;
                     localStorage.setItem('nFinder.signedIn', '1');
@@ -171,33 +167,10 @@
                 console.log('login...')
                 setTimeout(() => { login() }, 10000);
             }
-
-            //    google.accounts.id.initialize({
-            //        //TODO load from config dynamically
-            //        client_id: oauthClientId,
-            //        callback: handleCredentialResponse
-            //    });
-            //    google.accounts.id.renderButton(
-            //        document.getElementById("buttonDiv"),
-            //        { theme: "outline", size: "large" }  // customization attributes
-            //    );
-            //    google.accounts.id.prompt(); // also display the One Tap dialog
         }
 
         function login() {
-            signInWithRedirect(auth, provider)
-                .then(async (result) => {
-                    // This gives you a Google Access Token. You can use it to access the Google API.
-                    const credential = GoogleAuthProvider.credentialFromResult(result);
-
-                    // The signed-in user info.
-                    const user = result.user;
-                    console.log(user.accessToken);
-                    accessToken = user.accessToken;
-                    // ...
-                }).catch((error) => {
-                    console.log(error);
-                });
+            signInWithRedirect(auth, provider);
         }
 
         async function loadImages(firestore, keyword) {
@@ -241,16 +214,7 @@
             console.log(`keyword: ${keyword}`);
             return keyword;
         }
-//        const firestore = getFirestore(firebaseApp);
- //       const unsubFirestore = await loadImages(firestore);
-
     </script>
-
-
-    <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
-    <script>
-    </script>
-    <div id="buttonDiv"></div>
 
 </body>
 
