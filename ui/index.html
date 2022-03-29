@@ -9,9 +9,15 @@
         Highest possible
         score is 10000!</p>
     <button id="get-access">Activate camera</button>
-    <video autoplay playsinline></video>
-    <button id="takePhoto">Take photo</button>
-    <img id="imitsi"></img>
+    <div>
+        <video autoplay playsinline></video>
+    </div>
+    <div>
+        <button id="takePhoto">Take photo</button>
+    </div>
+    <div>
+        <img id="imitsi"></img>
+    </div>
 
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script type="module" src="/imagecapture.js">
@@ -37,11 +43,15 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     audio: false,
-                    video: true
+                    video: {
+                        //facingMode: {
+                        //    exact: 'environment'
+                        // }
+                        facingMode: 'environment'
+                    }
                 })
                 const videoTracks = stream.getVideoTracks()
                 track = videoTracks[0]
-                //alert(`Getting video from: ${track.label}`)
                 document.querySelector('video').srcObject = stream
                 //document.querySelector('#get-access').setAttribute('hidden', true)
                 //The video stream is stopped by track.stop() after 30 seconds of playback.
@@ -215,8 +225,8 @@
 
         function parseKeywordFromPath() {
             const match = window.location.href.match(/.*\/(.*)/)
-            const keyword = match.length > 1 ? match[1] : 'goat';
-            console.log(`keyword: ${keyword}`);
+            const keyword = match[1].length > 0 ? match[1] : 'goat';
+            console.log(match);
             return keyword;
         }
     </script>
