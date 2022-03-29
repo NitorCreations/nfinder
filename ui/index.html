@@ -19,6 +19,10 @@
         <img id="imitsi"></img>
     </div>
 
+    <div>
+        Want to find something else? Type it here and press enter: <input type="text" id="something_else">
+    </div>
+
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script type="module" src="/imagecapture.js">
     </script>
@@ -38,6 +42,14 @@
             window.location.href = window.location.href + 'goat';
         }
         var track;
+
+        const elseInput = document.querySelector('#something_else')
+        elseInput.addEventListener("keyup", function (event) {
+            event.preventDefault();
+            if (event.keyCode === 13) {
+                window.location.href = window.location.origin + `/${elseInput.value.toLowerCase()}`
+            }
+        });
 
         document.querySelector('#get-access').addEventListener('click', async function init(e) {
             try {
