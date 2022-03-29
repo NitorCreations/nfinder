@@ -4,6 +4,10 @@
 <head></head>
 
 <body>
+    <h1 id="heading"></h1>
+    <p>Take a photo of "<span id="instruction_keyword"></span>" and see how well Azure Vision API agrees with you!
+        Highest possible
+        score is 10000!</p>
     <button id="get-access">Activate camera</button>
     <video autoplay playsinline></video>
     <button id="takePhoto">Take photo</button>
@@ -22,6 +26,11 @@
         import { getFirestore, collection, getDocs, getDoc, onSnapshot, doc, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore.js'
         import { getAuth, getRedirectResult, signInWithCredential, signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
 
+        const keyword = parseKeywordFromPath();
+
+        if (!keyword) {
+            window.location.href = window.location.href + 'goat';
+        }
         var track;
 
         document.querySelector('#get-access').addEventListener('click', async function init(e) {
@@ -90,7 +99,6 @@
             appId: "1:278244435575:web:7c41fb6b45413a3fd60872"
         };
         const firebaseApp = initializeApp(firebaseConfig);
-        const keyword = parseKeywordFromPath();
         const getPresignedUrlEndpoint = `https://g1nhbctnde.execute-api.eu-west-1.amazonaws.com/get-presigned-url-s3/${keyword}`;
 
         function handleCredentialResponse(response) {
@@ -138,6 +146,8 @@
         window.onload = async function () {
             const photoHeader = document.querySelector('#photoheader');
             photoHeader.textContent = `Scoreboard for "${parseKeywordFromPath()}"`;
+            document.querySelector('#instruction_keyword').textContent = keyword;
+            document.querySelector('#heading').textContent = `Finding ${keyword}`;
 
             getRedirectResult(auth).then(async function (result) {
                 // The signed-in user info.
