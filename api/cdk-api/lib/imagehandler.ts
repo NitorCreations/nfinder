@@ -14,8 +14,6 @@ export interface ImageHandlerProps {
 export class ImageHandler extends Construct {
   constructor(scope: Construct, id: string, props: ImageHandlerProps) {
     super(scope, id);
-    console.log('vision api key');
-    console.log(process.env.VISION_API_KEY!);
     const imageHandlerFn = new NodejsFunction(
       this,
       'Lambda',

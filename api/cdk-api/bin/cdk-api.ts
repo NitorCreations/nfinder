@@ -5,8 +5,6 @@ import { ApiStack } from '../lib/api';
 //import { FrontendStack } from '../lib/frontend';
 
 const app = new cdk.App();
-console.log(process.env.CDK_DEFAULT_ACCOUNT)
-console.log(process.env.CDK_DEFAULT_REGION)
 
 new ApiStack(app, 'ApiStack', {
     stackName: 'nFinderApi',

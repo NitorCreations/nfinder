@@ -37,6 +37,7 @@
         import { getAuth, getRedirectResult, signInWithCredential, signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
 
         const keyword = parseKeywordFromPath();
+        var lastPhotoUuid = '';
 
         if (!keyword) {
             window.location.href = window.location.href + 'goat';
@@ -99,14 +100,14 @@
                 }
             });
             let presignedData = await response.json();
-            console.log(presignedData);
+            lastPhotoUuid = presignedData.imageUuid
 
             fetch(presignedData.imagePostUrl, {
                 method: "PUT",
                 headers: {},
                 body: blob,
             }).then(res => {
-                console.log("Request complete! response:", res);
+                //console.log("Request complete! response:", res);
             });
 
         }
@@ -122,28 +123,6 @@
         };
         const firebaseApp = initializeApp(firebaseConfig);
         const getPresignedUrlEndpoint = `https://g1nhbctnde.execute-api.eu-west-1.amazonaws.com/get-presigned-url-s3/${keyword}`;
-
-        function handleCredentialResponse(response) {
-            console.log("Encoded JWT ID token: " + response.credential);
-            const auth = getAuth(firebaseApp);
-            var credential = GoogleAuthProvider.credential(response.credential);
-            signInWithCredential(auth, credential)
-                .then(async (firebaseCredential) => {
-                    // Signed in
-                    var user = firebaseCredential.user;
-                    console.log('we have firebase credentials');
-                    console.log(user);
-                    const firestore = getFirestore(firebaseApp);
-                    const unsubFirestore = await loadImages(firestore);
-                })
-                .catch((error) => {
-                    var errorCode = error.code;
-                    var errorMessage = error.message;
-                    console.log('errorii');
-                    console.error(error);
-                });
-
-        }
         let accessToken;
         const provider = new GoogleAuthProvider();
         const auth = getAuth(firebaseApp);
@@ -153,7 +132,7 @@
                 localStorage.setItem('nFinder.signedIn', '1');
                 console.log('auth state changed to logged in');
                 accessToken = user.accessToken;
-                console.log(user);
+                //console.log(user);
                 const firestore = getFirestore(firebaseApp);
                 const unsubFirestore = await loadImages(firestore, keyword);
             } else {
@@ -163,7 +142,7 @@
                 login();
             }
         });
-        console.log('current user: ' + auth.currentUser);
+        //console.log('current user: ' + auth.currentUser);
 
         window.onload = async function () {
             const photoHeader = document.querySelector('#photoheader');
@@ -205,7 +184,12 @@
             const unsubscribe = onSnapshot(q, (querySnapshot) => {
                 const images = [];
                 querySnapshot.forEach((doc) => {
-                    images.push(doc.data());
+                    let image = doc.data()
+                    images.push(image)
+                    if (image.imageUuid && image.imageUuid === lastPhotoUuid) {
+                        lastPhotoUuid = '';
+                        alert(`Your photo "${image.caption}" scored ${image.score} for "${keyword}"`)
+                    }
                 });
                 renderImages(images);
             });
@@ -238,7 +222,6 @@
         function parseKeywordFromPath() {
             const match = window.location.href.match(/.*\/(.*)/)
             const keyword = match[1].length > 0 ? match[1] : 'goat';
-            console.log(match);
             return keyword;
         }
     </script>

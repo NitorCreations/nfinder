@@ -15,7 +15,8 @@ exports.main = async (event: APIGatewayEvent) => {
     const myBucket = process.env.BUCKET_NAME
     const keyword = event.pathParameters!.keyword!
     const contentType = event.queryStringParameters!.contentType!
-    const myKey = `upload/${keyword}/${randomUUID()}.${fileTypeMap[contentType]!}`
+    const uuid = randomUUID()
+    const myKey = `upload/${keyword}/${uuid}.${fileTypeMap[contentType]!}`
     const signedUrlExpireSeconds = 60 * 5
 
     const url = s3.getSignedUrl('putObject', {
@@ -27,5 +28,5 @@ exports.main = async (event: APIGatewayEvent) => {
 
     console.log(url)
 
-    return { imagePostUrl: url };
+    return { imagePostUrl: url, imageUuid: uuid };
 };
