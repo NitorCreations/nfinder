@@ -21,7 +21,8 @@ Here’s how nFinder is deployed:
 1. Set properties in `infra.properties` to match your cloud environment. This is the main `ndt` configuration file. Further properties can be set and overridden in an `infra.properties` file in the component and project directories. Branch specific values can be given in `infra-${branchName}.properties` files at all levels.The demo setup assumes you have an existing Google billing account and a folder where your service account is allowed to create a project. For AWS, it assumes you have an existing domain and a Route 53 hosted zone.
 
 1. Deploy the Azure Vision API: `ndt deploy-azure vision vision`.
-Deploy the Firebase app: `ndt deploy-terraform firebase firebase`
+
+1. Deploy the Firebase app: `ndt deploy-terraform firebase firebase`
 
     Google’s infrastructure as code support is a bit lacking here. You’ll need to go to your Firebase web console and enable the Google authentication support for this project. There’s no way to do this programmatically with a public API!
 
