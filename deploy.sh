@@ -2,9 +2,9 @@
 set -xe
 
 ndt deploy-azure vision vision
-export VISION_API_KEY=$(az deployment group show -g ndtmain-vision-vision -n ndtmain_vision_vision --query properties.outputs.visionApiKey.value -o tsv)
 
-ndt deploy-terraform firestore firestore
+ndt deploy-terraform firebase firebase
 
-#This deployment needs VISION_KEY
-ndt deploy-cdk api api
+ndt deploy-cdk aws api
+
+ndt deploy-cdk aws frontend
