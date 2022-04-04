@@ -11,9 +11,10 @@ import {
 import { ARecord, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { DnsValidatedCertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
+import { Bucket } from 'aws-cdk-lib/aws-s3';
 
 export interface FrontendProps {
-  bucket: s3.Bucket
+  //bucket: s3.IBucket
   zone: IHostedZone
 }
 
@@ -29,6 +30,9 @@ export class Frontend extends Construct {
       region: 'us-east-1'
     })
 
+    const bucket = new Bucket(this, 'UI', {
+    })
+
     const responseHeadersPolicy = new ResponseHeadersPolicy(this, 'corsHeaders', {
       corsBehavior: {
         accessControlAllowCredentials: false,
@@ -40,7 +44,7 @@ export class Frontend extends Construct {
     });
     this.distro = new cloudfront.Distribution(this, 'frontendDistro', {
       defaultBehavior: {
-        origin: new cfo.S3Origin(props.bucket, {
+        origin: new cfo.S3Origin(bucket, {
           originPath: '/frontend'
         }),
         cachePolicy: CachePolicy.CACHING_DISABLED,
@@ -60,9 +64,8 @@ export class Frontend extends Construct {
       domainNames: [process.env.APP_DOMAIN_NAME!],
       certificate: cert,
       priceClass: PriceClass.PRICE_CLASS_100
-      // certificate: acm.Certificate.fromCertificateArn(this, 'cert', process.env.AWS_CERTIFICATE_ARN!),
-      // domainNames: [process.env.APP_DOMAIN_NAME!]
     });
+
     const dnsRecord = new ARecord(this, "AliasRecord", {
       recordName: process.env.APP_DOMAIN_NAME!,
       zone: props.zone,
@@ -70,10 +73,10 @@ export class Frontend extends Construct {
     })
 
     const frontendDeployment = new s3_deployment.BucketDeployment(this, 'frontendDeployment', {
-      destinationBucket: props.bucket,
+      destinationBucket: bucket,
       destinationKeyPrefix: 'frontend/',
       //distribution: this.distro,
-      sources: [s3_deployment.Source.asset('../../ui')],
+      sources: [s3_deployment.Source.asset('../../dist')],
     })
 
     new CfnOutput(this, 'distroDomain', {

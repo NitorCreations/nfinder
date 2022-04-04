@@ -37,6 +37,10 @@
         import { getAuth, getRedirectResult, signInWithCredential, signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
 
         const keyword = parseKeywordFromPath();
+        const apiDomain = "SED_APIDOMAIN_HERE";
+        const getPresignedUrlEndpoint = `https://${apiDomain}/get-presigned-url-s3/${keyword}`;
+        let accessToken;
+        let auth;
         var lastPhotoUuid = '';
 
         if (!keyword) {
@@ -112,36 +116,6 @@
 
         }
 
-        // TODO load these details from bucket where they are written to by terraform
-        const firebaseConfig = {
-            apiKey: "AIzaSyB5cpT3kTay1x60tdOd4C6_sxRyLlIEX-I",
-            authDomain: "nfinder-1.firebaseapp.com",
-            projectId: "nfinder-1",
-            storageBucket: "nfinder-1.appspot.com",
-            messagingSenderId: "278244435575",
-            appId: "1:278244435575:web:7c41fb6b45413a3fd60872"
-        };
-        const firebaseApp = initializeApp(firebaseConfig);
-        const getPresignedUrlEndpoint = `https://g1nhbctnde.execute-api.eu-west-1.amazonaws.com/get-presigned-url-s3/${keyword}`;
-        let accessToken;
-        const provider = new GoogleAuthProvider();
-        const auth = getAuth(firebaseApp);
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                // User just signed in, we should not display dialog next time because of firebase auto-login
-                localStorage.setItem('nFinder.signedIn', '1');
-                console.log('auth state changed to logged in');
-                accessToken = user.accessToken;
-                //console.log(user);
-                const firestore = getFirestore(firebaseApp);
-                const unsubFirestore = await loadImages(firestore, keyword);
-            } else {
-                // User just signed-out or auto-login failed, we will show sign-in form immediately the next time he loads the page
-                console.log('auth state changed to logged out');
-                localStorage.removeItem('nFinder.signedIn');
-                login();
-            }
-        });
         //console.log('current user: ' + auth.currentUser);
 
         window.onload = async function () {
@@ -150,6 +124,7 @@
             document.querySelector('#instruction_keyword').textContent = keyword;
             document.querySelector('#heading').textContent = `Finding ${keyword}`;
 
+            await initFirebase();
             getRedirectResult(auth).then(async function (result) {
                 // The signed-in user info.
                 if (result && result.user) {
@@ -171,6 +146,31 @@
                     // the user's accounts here.
                 } else {
                     console.error(error);
+                }
+            });
+        }
+
+        async function initFirebase() {
+            let firebaseConfigResponse = await fetch("SED_FB_CONFIG_BUCKET_URL_HERE");
+            let firebaseConfig = await firebaseConfigResponse.json();
+            console.log(firebaseConfig);
+            const firebaseApp = initializeApp(firebaseConfig);
+            const provider = new GoogleAuthProvider();
+            auth = getAuth(firebaseApp);
+            auth.onAuthStateChanged(async user => {
+                if (user) {
+                    // User just signed in, we should not display dialog next time because of firebase auto-login
+                    localStorage.setItem('nFinder.signedIn', '1');
+                    console.log('auth state changed to logged in');
+                    accessToken = user.accessToken;
+                    //console.log(user);
+                    const firestore = getFirestore(firebaseApp);
+                    const unsubFirestore = await loadImages(firestore, keyword);
+                } else {
+                    // User just signed-out or auto-login failed, we will show sign-in form immediately the next time he loads the page
+                    console.log('auth state changed to logged out');
+                    localStorage.removeItem('nFinder.signedIn');
+                    login();
                 }
             });
         }

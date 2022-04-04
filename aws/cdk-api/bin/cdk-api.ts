@@ -10,5 +10,3 @@ new ApiStack(app, 'ApiStack', {
     stackName: 'nFinderApi',
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
 });
-// ndt won't deploy many stacks with CDK
-//new FrontendStack(app, 'FrontendStack', { stackName: 'nFinderFrontend' });

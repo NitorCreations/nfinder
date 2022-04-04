@@ -29,15 +29,6 @@ resource "google_project_service" "identitytoolkit" {
   disable_dependent_services = true
 }
 
-# resource "google_project_service" "iap" {
-#   service = "iap.googleapis.com"
-#   disable_dependent_services = true
-# }
-
-
-# Would love to create the projects with terraform too but somehow permissions end up not allowing web app access to
-# Firestore. There appears to be some magic in creating projects through the web console.
-
 resource "google_project" "nfinder" {
   name = var.GOOGLE_PROJECT_ID
   project_id = var.GOOGLE_PROJECT_ID
@@ -79,29 +70,26 @@ data "google_firebase_web_app_config" "basic" {
 #   application_title = "nFinder"
 # }
 
-# This is the only way to create a oauth2 client id using API. But with this there is no way to configure
-# authorized origins or redirect URIs for use with a generic web app... GCP basically lacks a public API endpoint
-# for proper automated creation of OAuth 2.0 Client IDs.
-# resource "google_iap_client" "project_client" {
-#   display_name = "nFinder"
-#   brand        =  google_iap_brand.project_brand.name
-
-# }
-
-# resource "google_identity_platform_default_supported_idp_config" "default" {
-#   idp_id = "google.com"
-#   client_id = google_iap_client.project_client.client_id
-#   client_secret = google_iap_client.project_client.secret
-#   enabled = "true"
-# }
-
 resource "google_storage_bucket" "default" {
     provider = google-beta
     name     = "fb-webapp-${google_project.nfinder.project_id}"
     location = var.GOOGLE_STORAGE_LOCATION
+    
 }
 
-resource "google_storage_bucket_object" "default" {
+resource "google_storage_bucket_access_control" "public_rule" {
+  bucket = google_storage_bucket.default.name
+  role   = "READER"
+  entity = "allUsers"
+}
+
+resource "google_storage_default_object_access_control" "public_rule" {
+  bucket = google_storage_bucket.default.name
+  role   = "READER"
+  entity = "allUsers"
+}
+
+resource "google_storage_bucket_object" "fb_config_json" {
     depends_on = [google_project.nfinder]
     provider = google-beta
     bucket = google_storage_bucket.default.name
@@ -115,7 +103,16 @@ resource "google_storage_bucket_object" "default" {
         storageBucket      = lookup(data.google_firebase_web_app_config.basic, "storage_bucket", "")
         messagingSenderId  = lookup(data.google_firebase_web_app_config.basic, "messaging_sender_id", "")
         measurementId      = lookup(data.google_firebase_web_app_config.basic, "measurement_id", "")
+        projectId          = var.GOOGLE_PROJECT_ID
     })
+}
+
+resource "google_storage_object_access_control" "public_rule" {
+  object = google_storage_bucket_object.fb_config_json.output_name
+  bucket = google_storage_bucket.default.name
+  role   = "READER"
+  entity = "allUsers"
+
 }
 
 
@@ -140,11 +137,6 @@ resource "aws_secretsmanager_secret_version" "google-credentials" {
   secret_string = base64decode(google_service_account_key.cross-cloud-key.private_key)
 }
 
-# resource "google_project_iam_policy" "project" {
-#   project = var.GOOGLE_PROJECT_ID
-#   policy_data = data.google_iam_policy.crosscloud.policy_data
-# }
-
 resource "google_project_iam_binding" "project" {
   project = google_project.nfinder.project_id
   role    = "roles/firebase.admin"
@@ -152,11 +144,3 @@ resource "google_project_iam_binding" "project" {
     "serviceAccount:${google_service_account.cross-cloud.email}"
   ]
 }
-
-                #  - {
-                #       - members = [
-                #           - "serviceAccount:firebase-service-account@firebase-sa-management.iam.gserviceaccount.com",
-                #         ]
-                #       - role    = "roles/firebase.managementServiceAgent"
-                #     },
- 

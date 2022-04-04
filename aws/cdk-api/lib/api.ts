@@ -8,8 +8,10 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 import { ImageHandler } from './imagehandler';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { Frontend } from './frontend';
-import { HostedZone } from 'aws-cdk-lib/aws-route53';
+import { DnsValidatedCertificate } from 'aws-cdk-lib/aws-certificatemanager';
+import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
+import { DomainName } from '@aws-cdk/aws-apigatewayv2-alpha';
+import { ApiGatewayv2DomainProperties } from 'aws-cdk-lib/aws-route53-targets';
 
 export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -28,11 +30,23 @@ export class ApiStack extends Stack {
         },
       ],
     });
+    s3Bucket.grantPublicAccess('processed/*');
+
 
     const zone = HostedZone.fromLookup(this, 'DNSZone', {
       domainName: process.env.HOSTED_ZONE!
     })
-    const frontend = new Frontend(this, 'Frontend', { bucket: s3Bucket, zone });
+
+    const cert = new DnsValidatedCertificate(this, 'Cert', {
+      hostedZone: zone,
+      domainName: process.env.API_DOMAIN_NAME!,
+      cleanupRoute53Records: true,
+    })
+
+    const domainName = new DomainName(this, 'CustomDomain', {
+      certificate: cert,
+      domainName: process.env.API_DOMAIN_NAME!,
+    })
 
     const httpApi = new apigwv2.HttpApi(this, 'api', {
       corsPreflight: {
@@ -51,11 +65,16 @@ export class ApiStack extends Stack {
           apigwv2.CorsHttpMethod.DELETE,
         ],
         allowCredentials: false,
-        allowOrigins: ['http://localhost:8080', `https://${frontend.distro.distributionDomainName}`, process.env.APP_URL!],
+        allowOrigins: ['http://localhost:8080', process.env.APP_URL!],
       },
+      defaultDomainMapping: { domainName }
     });
 
-    s3Bucket.grantPublicAccess('processed/*');
+    const dnsRecord = new ARecord(this, "AliasRecord", {
+      recordName: process.env.API_DOMAIN_NAME!,
+      zone: zone,
+      target: RecordTarget.fromAlias(new ApiGatewayv2DomainProperties(domainName.regionalDomainName, domainName.regionalHostedZoneId))
+    })
 
     const getPresignedUrlFunction = new NodejsFunction(
       this,
@@ -88,5 +107,6 @@ export class ApiStack extends Stack {
     const imageHandler = new ImageHandler(this, 'ImageHandler', { bucket: s3Bucket });
 
     new CfnOutput(this, 'apiurl', { value: httpApi.apiEndpoint })
+    new CfnOutput(this, 'bucketName', { value: s3Bucket.bucketName })
   }
 }
