@@ -34,11 +34,12 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js'
         // Add Firebase products that you want to use
         import { getFirestore, collection, getDocs, getDoc, onSnapshot, doc, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore.js'
-        import { getAuth, getRedirectResult, signInWithCredential, signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
+        import { getAuth, onAuthStateChanged, getRedirectResult, signInWithCredential, signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.7/firebase-auth.js'
 
         const keyword = parseKeywordFromPath();
         const apiDomain = "SED_APIDOMAIN_HERE";
         const getPresignedUrlEndpoint = `https://${apiDomain}/get-presigned-url-s3/${keyword}`;
+        const authProvider = new GoogleAuthProvider();
         let accessToken;
         let auth;
         var lastPhotoUuid = '';
@@ -155,9 +156,8 @@
             let firebaseConfig = await firebaseConfigResponse.json();
             console.log(firebaseConfig);
             const firebaseApp = initializeApp(firebaseConfig);
-            const provider = new GoogleAuthProvider();
             auth = getAuth(firebaseApp);
-            auth.onAuthStateChanged(async user => {
+            onAuthStateChanged(auth, async user => {
                 if (user) {
                     // User just signed in, we should not display dialog next time because of firebase auto-login
                     localStorage.setItem('nFinder.signedIn', '1');
@@ -176,7 +176,7 @@
         }
 
         function login() {
-            signInWithRedirect(auth, provider);
+            signInWithRedirect(auth, authProvider);
         }
 
         async function loadImages(firestore, keyword) {
