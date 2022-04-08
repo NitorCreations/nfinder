@@ -53,7 +53,7 @@
         elseInput.addEventListener("keyup", function (event) {
             event.preventDefault();
             if (event.keyCode === 13) {
-                window.location.href = window.location.origin + `/${elseInput.value.toLowerCase()}`
+                window.location.href = window.location.origin + `/${encodeURIComponent(elseInput.value.toLowerCase())}`
             }
         });
 
@@ -222,7 +222,7 @@
         function parseKeywordFromPath() {
             const match = window.location.href.match(/.*\/(.*)/)
             const keyword = match[1].length > 0 ? match[1] : 'goat';
-            return keyword;
+            return decodeURIComponent(keyword);
         }
     </script>
 
